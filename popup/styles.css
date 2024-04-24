@@ -1,0 +1,133 @@
+:root {
+    --title-background: #191919;
+    --normal-background: #262626;
+    --box-background: #323232;
+
+    --title-color: #e2e2e2;
+    --text-color: #cbcbcb;
+
+    --button: #2196F3;
+    --buttonHover: #1c64a1;
+    --buttonHoverBorder: #175182;
+}
+
+::-webkit-scrollbar {
+    background-color: var(--box-background);
+    width: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--title-background);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    width: 300px;
+    min-height: max-content;
+    max-height: fit-content;
+    margin: 0px;
+    padding: 0px;
+    padding-bottom: 20px;
+
+    background-color: var(--normal-background);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--text-color);
+}
+
+div {
+    user-select: none;
+}
+
+#title {
+    width: 300px;
+
+    background-color: var(--title-background);
+    color: var(--title-color);
+    border-bottom: 1px solid #111;
+
+    padding: 10px;
+    text-align: center;
+    font-size: large;
+}
+
+.preferences span, .preferences em, .settingsExpand , .settings span {
+    padding: 3px;
+    font-size: small;
+    color: var(--text-color);
+}
+
+.preferences, .settings, .settingsExpand {
+    padding-left: 20px;
+}
+
+.preferences .info:hover, .settings .info:hover, .settingsExpand:hover {
+    cursor: pointer;
+}
+
+.viewMore {
+    margin-left: 3px;
+}
+
+.viewMore:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.showMore {
+    min-width: 100%;
+    background-color: var(--box-background);
+    padding: 2px;
+    border-radius: 5px;
+    user-select: text;
+}
+
+.settings {
+    margin-top: 10px;
+}
+
+.search-bar {
+    padding: 3px;
+    border-radius: 5px;
+    background-color: var(--box-background);
+    border: 1px solid transparent;
+    transition: all .3s;
+    color: var(--text-color);
+    margin-top: 5px;
+    width: 55%;
+
+    &:focus {
+        outline: none;
+        border: 1px solid var(--button);
+        box-shadow: 0 0 5px var(--button);
+    }
+}
+
+.button {
+    background-color: var(--button);
+    border: 1px solid transparent;
+    padding: 3px 10px;
+    border-radius: 5px;
+    color: var(--title-color);
+    margin-top: 5px;
+
+    &:hover {
+        cursor: pointer;
+        background-color: var(--buttonHover);
+        border: 1px solid var(--buttonHoverBorder);
+    }
+}
+
+.hide {
+    display: none;
+}
+
+.margin {
+    margin-right: 3px;
+}
+
+#show_per_uploader_filters, #showPrefFilters, #showFavUploaders {
+    line-height: 21px;
+}

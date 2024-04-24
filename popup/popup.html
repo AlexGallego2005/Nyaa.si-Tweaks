@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyaa.si Tweaks</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" type="text/css" href="switches.css">
+</head>
+<body>
+    <div id="title">
+        <span>Nyaa.si Tweaks</span>
+    </div>
+    <br>
+    <div class="preferences">
+        <div class="auto-hide">
+            <span>Enable auto-hide</span>
+            <span class="info" title="Auto-hides torrents with no seeders.">&#128712;</span>
+            <label class="switch">
+                <input id="autohide" type="checkbox" checked>
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <br>
+        <div class="highlight-fav">
+            <span>Favorite uploaders</span>
+            <span class="info" title="Highlights your favorite uploaders.">&#128712;</span>
+            <label class="switch">
+                <input id="highlightFav" type="checkbox" checked>
+                <span class="slider round"></span>
+            </label>
+            <em class="viewMore" id="viewUploaders">View</em>
+            <br><br>
+            <span class="showMore" id="showFavUploaders" style="display: none;"></span>
+        </div>
+        <div class="prefs">
+            <span>Global filters</span>
+            <span class="info" title="Filters your favorite uploaders with certain words (1080, FLAC, etc.).">&#128712;</span>
+            <label class="switch">
+                <input id="prefs" type="checkbox" checked>
+                <span class="slider round"></span>
+            </label>
+            <em class="viewMore" id="viewFilters">View</em>
+            <br><br>
+            <span class="showMore" id="showPrefFilters" style="display: none;"></span>
+        </div>
+        <div class="prefs">
+            <span>Per uploader filters</span>
+            <span class="info" title="Filters a single uploader with certain words.">&#128712;</span>
+            <label class="switch">
+                <input id="per_uploader_filter" type="checkbox" checked>
+                <span class="slider round"></span>
+            </label>
+            <em class="viewMore" id="view_per_uploader_filters">View</em>
+            <br><br>
+            <span class="showMore" id="show_per_uploader_filters" style="display: none;"></span>
+        </div>
+        <div>
+            <span>Custom background</span>
+            <span class="info" title="Changes default background for a user-custom one.">&#128712;</span>
+            <label class="switch">
+                <input id="custom_background" type="checkbox" checked>
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </div>
+    <br>
+    <div style="display: flex; justify-content: flex-start; align-items: center;"><span id="expand" class="settingsExpand">Settings ▼</span><hr style="border: none; right: 10px; width: 190px; height: 2px; background-color: var(--text-color);"></div>
+    <div id="settingsDiv" class="settings" style="display: none;">
+        <div>
+            <span>Uploaders</span>
+            <span class="info" title="Manually add or remove favorite uploaders.">&#128712;</span>
+            <br>
+            <input type="text" id="custom_uploader_input" placeholder="Separate with (;)..." class="search-bar">
+            <button class="button" id="custom_uploader_button">Add</button>
+            <button class="button" id="remove_custom_uploader_button">Rmv</button>
+        </div>
+        <br>
+        <div>
+            <span>Global filters</span>
+            <span class="info" title="Add or remove filters for any uploaders.">&#128712;</span>
+            <br>
+            <input type="text" id="custom_global_filter_input" placeholder="Separate with (;)..." class="search-bar">
+            <button class="button" id="custom_global_filter_button">Add</button>
+            <button class="button" id="remove_custom_global_filter_button">Rmv</button>
+        </div>
+        <br>
+        <div>
+            <span>Per uploader filters</span>
+            <span class="info" title="Add or remove filters for only one uploader.">&#128712;</span>
+            <br>
+            <input type="text" id="custom_uploader_filter_input" placeholder="Separate with (;)..." class="search-bar">
+            <button class="button" id="select_custom_uploader_filter_button">Select upl.</button>
+            <button class="button hide" id="custom_uploader_filter_button">Add</button>
+            <button class="button hide" id="remove_custom_uploader_filter_button">Rmv</button><br>
+            <div id="select_uploader_for_filter"></div>
+        </div>
+        <br>
+        <div>
+            <span>Clear all</span>
+            <span class="info" title="Clear all uploaders / filters.">&#128712;</span>
+            <br>
+            <button class="button" id="clear_all_uploaders_button">Uploaders</button>
+            <button class="button" id="clear_all_filters_button">Filters</button>
+        </div>
+        <br>
+        <div>
+            <span>Background link</span>
+            <span class="info" title="Link for the custom background.">&#128712;</span>
+            <br>
+            <input type="text" id="set_custom_background_link" placeholder="Enter background link..." class="search-bar">
+            <button class="button" id="set_custom_background_button">Set</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

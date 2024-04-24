@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Nyaa.si Tweaks",
+  "version": "0.7",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://nyaa.si/*"],
+      "run_at": "document_idle",
+      "js": ["nyaa/nyaa.js"]
+    },
+    {
+      "matches": ["https://nyaa.si/view/*"],
+      "run_at": "document_idle",
+      "js": ["nyaa/view.js"]
+    },
+    {
+      "matches": ["https://nyaa.si/settings"],
+      "run_at": "document_idle",
+      "js": ["nyaa/settings.js"]
+    },
+    {
+      "matches": ["https://nyaa.si/downloads"],
+      "run_at": "document_idle",
+      "js": ["nyaa/downloads.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["popup/popup.html"],
+      "matches": ["https://nyaa.si/*"]
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "downloads"
+  ],
+  "icons": {
+    "16": "./icons/icon16.png",
+    "48": "./icons/icon48.png",
+    "128": "./icons/icon128.png"
+  }
+}
