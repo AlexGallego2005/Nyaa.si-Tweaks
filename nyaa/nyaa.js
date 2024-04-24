@@ -1,158 +1,151 @@
-var elms = document.querySelectorAll('tbody > tr'),
-    paging = document.querySelectorAll('.pagination > li'),
-    navbar = document.querySelector("#navbar > ul"),
-    hidden = false,
-    weblinks = ['upload', 'rules', 'info', 'rss', 'view', 'settings', 'downloads'];
+// Are torrents with no seeders hidden?
+var hidden = false;
+var hiddenTorrentsNum = 0;
 
-function onLoad() {
-    chrome.storage.sync.get(['preferences', 'uploaders', 'filters'], function (items) {
-        console.log(`Settings retrieved:\n\nHide automatically: ${items['preferences'].autohide}\nHighlight favorites: ${items['preferences'].highlight_uploaders}\nGlobal filters: ${items['preferences'].global_filters}\nCustom background: ${items['preferences'].custom_background}\n\nFavorite uploaders: ${items['uploaders'].favorites}\nFilters: ${items['prefFilters']}\nBackground link: ${items['preferences'].custom_background_link}\n\n`);
+// Website elements.
+const container = document.querySelector('body > div.container');
+const elms = document.querySelectorAll('tbody > tr');
+const paging = document.querySelectorAll('.pagination > li');
+const navbar = document.querySelector("#navbar > ul");
 
-        if (items['preferences'].custom_background && items['preferences'].custom_background_link !== '') document.styleSheets[0].insertRule(`body { background: linear-gradient(#000000aa, #000000aa), url(${items['preferences'].custom_background_link}); background-position: auto 50%; }`, 0);
-        if (window.innerWidth > 2080) document.styleSheets[0].insertRule("body > .container { width: 2000px !important; }", 1);
+/** Don't execute stuff if user inside these pages. */
+const restricted = ['upload', 'rules', 'info', 'rss', 'view', 'settings', 'downloads'];
 
-        var li = document.createElement("li"),
-            downloads = document.createElement("a");
+/** Function to load when page finishes loading. */
+async function onLoad()
+{
+    /** @type {{ filters: { global: [], local: { template?: [] } }, preferences: { autohide: boolean, custom_background: boolean, custom_background_link: string, global_filters: boolean, highlight_uploaders: boolean, per_uploader_filters: boolean }, uploaders: { favorites: [] } }} */
+    const userData = await chrome.storage.sync.get(['preferences', 'uploaders', 'filters']);
 
-        downloads.setAttribute("href", "https://nyaa.si/downloads");
-        downloads.innerHTML = 'Downloads'
-        li.appendChild(downloads);
-        navbar.appendChild(li);
+    // Debug
+    console.log(userData);
 
-        if (!weblinks.includes(window.location.href.split('https://nyaa.si/')[1].split('/')[0])) {
-            
-            // clone the bottom pages-navigation bar above the torrents table //
-            var nav = document.querySelector('[class="navbar navbar-default navbar-static-top navbar-inverse"]'),
-                nav_pagination = document.querySelector('[class="center"]'),
-                nav_pagination_clone = nav_pagination.cloneNode(true);
+    /** Inserts new custom styles. */
+    function loadStylesheets()
+    {
+        // Responsive width (for wider displays overall).
+        document.styleSheets[0].insertRule("body > .container { width: 80vw !important; }", 1);
+        
+        if (restricted.some(l => window.location.href.includes(l))) return;
 
-            nav.parentNode.insertBefore(nav_pagination_clone, nav.nextSibling);
+        // Insert new custom styles for custom classes. //
+        document.styleSheets[0].insertRule(".placeholder { height: 37px; width: 37px; }", 0);
+        document.styleSheets[0].insertRule(".noSeeds { height: 37px; width: 37px; z-index: 10; margin-left: 34px; background-image: url(https://static.thenounproject.com/png/55393-200.png); background-size: 40%; background-position: 50%; background-repeat: no-repeat; }", 0);
+        //document.styleSheets[0].insertRule(".favorite { height: 37px; width: 37px; z-index: 10; margin-left: 7px; background-image: url(https://images.freeimages.com/fic/images/icons/767/wp_woothemes_ultimate/256/star.png); background-size: 50%; background-position: 50%; background-repeat: no-repeat; }", 0);
+        document.styleSheets[0].insertRule(".favorite { background-color: #D3D31534 !important; }", 0);
+    };
 
-            // insert new custom styles for custom classes //
-            document.styleSheets[0].insertRule(".placeholder { height: 37px; width: 37px; }", 0);
-            document.styleSheets[0].insertRule(".noSeeds { height: 37px; width: 37px; z-index: 10; margin-left: 34px; background-image: url(https://static.thenounproject.com/png/55393-200.png); background-size: 50%; background-position: 50%; background-repeat: no-repeat; }", 0);
-            document.styleSheets[0].insertRule(".favorite { height: 37px; width: 37px; z-index: 10; margin-left: 7px; background-image: url(https://images.freeimages.com/fic/images/icons/767/wp_woothemes_ultimate/256/star.png); background-size: 50%; background-position: 50%; background-repeat: no-repeat; }", 0);
+    /** Loads the custom user-set background. */
+    function setCustomBackground()
+    {
+        if (!userData.preferences.custom_background || userData.preferences.custom_background_link.length < 10) return;
+        document.styleSheets[0].insertRule(`body { background: linear-gradient(#000000aa, #000000aa), url(${ userData.preferences.custom_background_link }); background-position: auto 50%; }`, 0);
+        return;
+    };
 
-            // adds a new column for each torrent with custom classes //
-            for (var i = 0; i < elms.length; i++) {
-                var td1 = document.createElement("td");
-                td1.setAttribute("class", "placeholder seeders");
-                elms[i].appendChild(td1);
+    /** Create extra links or text nodes in the nav bar. */
+    function loadNavigationBar()
+    {
+        navbar.insertAdjacentHTML('beforeend', `<li><a href="/downloads">Downloads</a></li>`);
+        navbar.insertAdjacentHTML('beforeend', `<li><a id="hiddenTorrentsNum" href=""></a></li>`);
+        return;
+    };
 
-                var seeders = elms[i].getElementsByClassName("text-center")[3];
+    loadStylesheets();
+    setCustomBackground();
+    loadNavigationBar();
 
-                // if no seeders adds a special class //
-                if (parseInt(seeders.innerHTML) == 0) {
-                    var noSeed = elms[i].getElementsByTagName("td")[8];
-                    noSeed.setAttribute("class", "noSeeds seeders")
-                }
+    if (restricted.some(l => window.location.href.includes(l))) return;
+    
+    /** Clone the bottom pages-navigation bar above the torrents table. */
+    function clonePages()
+    {
+        container.insertAdjacentElement('afterbegin', document.querySelector('body > div.container > div.center')?.cloneNode(true) ?? document.querySelector('body > div.container > div.row > div.center')?.cloneNode(true));
+        return;
+    };
+
+    /** Mark torrents with no seeders. */
+    function noSeeders()
+    {
+        for (const torrent of elms)
+        {
+            /** @type {number} - Number of seeders this torrent has. */
+            var seeders = parseInt(torrent.children[5].innerHTML);
+            if (seeders) continue;
+
+            torrent.children[5].innerHTML = '';
+            torrent.children[5].setAttribute('class', 'noSeeds');
+            hiddenTorrentsNum++;
+            //torrent.insertAdjacentHTML('beforeend', `<td class="${ seeders > 0 ? 'placeholder' : 'noSeeds' } seeders"></td>`);
+        };
+        return;
+    };
+
+    function highlightUploaders()
+    {
+        for (const torrent of elms)
+        {
+            /** @type {string} - Name of this torrent. */
+            var name = torrent.getElementsByTagName("td")[1].textContent;
+            if (!userData.uploaders.favorites.some(u => name.toLowerCase().includes(u.toLowerCase()))) continue;
+
+            // If filters are enabled, checks if the torrent names contains both the uploader and the filters. //
+            if (!userData.preferences.per_uploader_filters && !userData.preferences.global_filters) torrent.setAttribute('class', 'favorite');
+            else if (userData.preferences.per_uploader_filters && Object.keys(userData.filters.local).some(u => name.toLowerCase().includes(u.toLowerCase())))
+            {
+                /** @type {string} - The name of the uploader (filtered and in the torrent name). */
+                const uploader = Object.keys(userData.filters.local).find(u => name.toLowerCase().includes(u.toLowerCase()));
+                if (userData.filters.local[uploader].every(f => f.startsWith('-') ? !name.toLowerCase().includes(f.toLowerCase().substring(1)) : name.toLowerCase().includes(f.toLowerCase()))) torrent.setAttribute('class', 'favorite');
             }
+            else if (userData.preferences.global_filters) if (userData.filters.global.every(f => f.startsWith('-') ? !name.toLowerCase().includes(f.toLowerCase().substring(1)) : name.toLowerCase().includes(f.toLowerCase()))) torrent.setAttribute('class', 'favorite');
+        };
+        return;
+    };
 
-            // if the option to highlight favorite uploaders is enabled, adds a new column and checks if any fav. uploader is in the torrent's name //
-            if (items['preferences'].highlight_uploaders) {
-                for (var i = 0; i < elms.length; i++) {
-                    var td2 = document.createElement("td");
-                    td2.setAttribute("class", "placeholder");
-                    elms[i].appendChild(td2);
-                    var torrentName = elms[i].getElementsByTagName("td")[1].getElementsByTagName("a")[elms[i].getElementsByTagName("td")[1].getElementsByTagName("a").length - 1].innerHTML;
-                    if (items['uploaders'].favorites.some(uploaderName => torrentName.toLowerCase().includes(uploaderName.toLowerCase()))) {
-                        function favoriteAdd() {
-                            var fav = elms[i].getElementsByTagName("td")[9];
-                            fav.setAttribute("class", "favorite")
-                        }
-
-                        function findName() {
-                            for (var i = 0; i < Object.keys(items['filters'].local).length; i++) {
-                                if (torrentName.includes(Object.keys(items['filters'].local)[i])) {
-                                    name = Object.keys(items['filters'].local)[i];
-                                    return name;
-                                }
-                            }
-                        }
-
-                        // if filters are enabled, checks if the torrent names contains both the uploader and the filters //
-                        if (items['preferences'].per_uploader_filters && Object.keys(items['filters'].local).some(uploaderName => torrentName.toLowerCase().includes(uploaderName.toLowerCase()))) {
-                            console.log('test')
-                            var name = findName()
-                            if (items['filters'].local[name].every(filterWord => torrentName.toLowerCase().includes(filterWord.toLowerCase()))) console.log('test1'), favoriteAdd();
-                        } else if (items['preferences'].global_filters) {
-                            if (items['filters'].global.some(preference => torrentName.toLowerCase().includes(preference.toLowerCase()))) favoriteAdd();
-                        } else {
-                            favoriteAdd();
-                        }
-                    }
-                }
-            }
-
-            // new label on nav to count hidden torrents //
-            var li = document.createElement("li"),
-                hiddenTorrents = document.createElement("a");
-
-            hiddenTorrents.setAttribute("id", "hiddenTorrentsNum");
-            li.appendChild(hiddenTorrents);
-            navbar.appendChild(li);
-
-            // automatically hide torrents if the option is enabled //
-            if (items['preferences'].autohide) hideTorrents();
-
-        }
-    });
+    clonePages();
+    noSeeders();
+    if (userData.preferences.highlight_uploaders) highlightUploaders();
+    if (userData.preferences.autohide) hideTorrents();
 }
 
-function hideTorrents() {
+/** Hide or unhide torrents without seeders. */
+function hideTorrents()
+{
     if (!hidden) {
-        var hiddenNum = 0;
-
-        for (var i = 0; i < elms.length; i++) {
-            var seeders = elms[i].getElementsByClassName("text-center")[3];
-            var seeds = elms[i].getElementsByClassName("seeders");
-            if (parseInt(seeders.innerHTML) == 0) {
-                elms[i].style.display = "none";
-                hiddenNum += 1;
-            }
-            seeds[0].style.display = "none";
-        }
-        hidden = true;
-        try { document.querySelector("[id='hiddenTorrentsNum']").innerHTML = `Hidden: ${hiddenNum}`; } catch (err) { console.log(err) };
+        for (const seeds of container.getElementsByClassName('noSeeds')) seeds.parentElement.style.display = 'none';
+        try { document.getElementById('hiddenTorrentsNum').textContent = `Hidden: ${ hiddenTorrentsNum }`; } catch (err) { console.log(err) };
     } else {
-        for (var i = 0; i < elms.length; i++) {
-            var seeds = elms[i].getElementsByClassName("seeders");
-            elms[i].removeAttribute("style");
-            seeds[0].removeAttribute("style");
-        }
-        hidden = false;
-        try { document.querySelector("[id='hiddenTorrentsNum']").innerHTML = ""; } catch (err) { throw err };
-    }
+        for (const seeds of container.getElementsByClassName('noSeeds')) seeds.parentElement.removeAttribute('style');
+        try { document.getElementById('hiddenTorrentsNum').textContent = ''; } catch (err) { console.log(err) };
+    };
+    hidden = !hidden;
     return;
 }
 
-function navigate(direction) {
-    var nextBtnHref = paging[paging.length - 1].getElementsByTagName("a")[0].getAttribute("href");
-    var prevBtnHref = paging[0].getElementsByTagName("a")[0].getAttribute("href");
+function navigate(direction)
+{
+    /** @type {string} - Redirection URL */
+    var redirect;
 
-    if (direction == "forward") {
-        if (nextBtnHref) window.location.href = `https://nyaa.si${nextBtnHref}`, console.log(nextBtnHref);
-        else alert("You can't go any further.")
-    } else {
-        if (prevBtnHref) window.location.href = `https://nyaa.si${prevBtnHref}`, console.log(prevBtnHref);
-        else alert("You can't go back anymore.")
-    }
-}
+    if (direction == 'full-forward') redirect = paging[paging.length - 2].getElementsByTagName("a")[0].href;
+    else if (direction == 'forward') redirect = paging[paging.length - 1].getElementsByTagName("a")[0].href;
+    else if (direction == 'full-backwards') redirect = paging[1].getElementsByTagName("a")[0].href;
+    else redirect = paging[0].getElementsByTagName("a")[0].href;
 
-document.onload = onLoad()
-document.onkeyup = function (e) {
+    window.location.href = redirect;
+};
+
+document.onload = onLoad();
+document.onkeydown = function (e)
+{
+    if (document.activeElement.tagName === 'INPUT') return;
     e = e || window.Event;
-    if (e.key.toLowerCase() == "h" && document.activeElement.tagName != 'INPUT') {
-        hideTorrents();
-    } else if ((e.key.toLowerCase() == "n" || e.key.toLowerCase() == "arrowright") && document.activeElement.tagName != 'INPUT') {
-        navigate("forward");
-    } else if ((e.key.toLowerCase() == "b" || e.key.toLowerCase() == "arrowleft") && document.activeElement.tagName != 'INPUT') {
-        navigate("backwards");
-    }
-}
+    
+    if (e.key.toLowerCase() == 'h') hideTorrents();
+    else if (e.key.toLowerCase() == 'arrowright' && e.ctrlKey) navigate('full-forward');
+    else if (e.key.toLowerCase() == 'arrowleft' && e.ctrlKey) navigate('full-backwards');
+    else if ((e.key.toLowerCase() == 'n' || e.key.toLowerCase() == 'arrowright')) navigate('forward');
+    else if ((e.key.toLowerCase() == 'b' || e.key.toLowerCase() == 'arrowleft')) navigate('backwards');
+};
 
-window.onresize = function () {
-    var torrents_container = document.querySelector('body > .container');
-    if (window.screen.innerWidth > 2080) torrents_container.setAttribute('style', 'width: 2000px;');
-    else torrents_container.removeAttribute('style');
-}
+//console.log(`Settings retrieved:\n\nHide automatically: ${items['preferences'].autohide}\nHighlight favorites: ${items['preferences'].highlight_uploaders}\nGlobal filters: ${items['preferences'].global_filters}\nCustom background: ${items['preferences'].custom_background}\n\nFavorite uploaders: ${items['uploaders'].favorites}\nFilters: ${items['prefFilters']}\nBackground link: ${items['preferences'].custom_background_link}\n\n`);

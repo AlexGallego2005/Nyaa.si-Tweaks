@@ -1,48 +1,35 @@
-function onLoad() {
-    chrome.storage.sync.get(['preferences', 'uploaders', 'filters'], function (items) {
-        console.log(`Settings retrieved:\n\nHide automatically: ${items['preferences'].autohide}\nHighlight favorites: ${items['preferences'].highlight_uploaders}\nGlobal filters: ${items['preferences'].global_filters}\nCustom background: ${items['preferences'].custom_background}\n\nFavorite uploaders: ${items['uploaders'].favorites}\nFilters: ${items['prefFilters']}\nBackground link: ${items['preferences'].custom_background_link}\n\n`);
+/** Function to load when page finishes loading. */
+async function onLoad()
+{
+    /** @type {{ filters: { global: [], local: { template?: [] } }, preferences: { autohide: boolean, custom_background: boolean, custom_background_link: string, global_filters: boolean, highlight_uploaders: boolean, per_uploader_filters: boolean }, uploaders: { favorites: [] } }} */
+    const userData = await chrome.storage.sync.get(['preferences', 'uploaders', 'filters']);
 
-        var uploader = document.querySelector('[class="row"] [title="Trusted"]'),
-            uploaderToggle = document.createElement("div");
-        if (!uploader) uploader = document.querySelector('[class="row"] [title="User"]');
+    /** @type {HTMLElement} - HTML element that contains the information about the uploader. */
+    const uploader = document.querySelector('[class="row"] [title="Trusted"]') ?? document.querySelector('[class="row"] [title="User"]'); if (!uploader) return; // Returns if there's not user (anonymous).
 
-        if (uploader) {
-            if (items["uploaders"].favorites.length > 0 && items["uploaders"].favorites.includes(uploader.textContent)) {
-                document.styleSheets[0].insertRule(".uploader { float: left; border-radius: 50px; background-color: transparent; margin-right: 3px; height: 20px; width: 20px; background: url(https://images.freeimages.com/fic/images/icons/767/wp_woothemes_ultimate/256/star.png); background-size: 80%; background-position: 50%; background-repeat: no-repeat; }", 0);
-                document.styleSheets[0].insertRule(".uploader:hover { cursor: pointer; background: url(https://i.imgur.com/idTXgAh.png); background-size: 80%; background-position: 50%; background-repeat: no-repeat; }", 0);
-                uploaderToggle.setAttribute("class", "uploader");
-                uploaderToggle.setAttribute("title", "Unfavorite Uploader");
-                uploader.parentNode.insertBefore(uploaderToggle, uploader.nextSibling)
-                uploaderToggle.addEventListener("click", function () {
-                    for (var i = 0; i < items["uploaders"].favorites.length; i++) {
-                        if (items["uploaders"].favorites == uploader.textContent) {
-                            items["uploaders"].favorites.splice(i, 1);
-                            i--;
-                        }
-                    }
-                    chrome.storage.sync.set({ "uploaders": items["uploaders"] })
-                    location.reload()
-                })
-            } else {
-                document.styleSheets[0].insertRule(".uploader { float: left; border-radius: 50px; background-color: transparent; margin-right: 3px; height: 20px; width: 20px; background: url(https://i.imgur.com/idTXgAh.png); background-size: 80%; background-position: 50%; background-repeat: no-repeat; }", 0);
-                document.styleSheets[0].insertRule(".uploader:hover { cursor: pointer; background: url(https://images.freeimages.com/fic/images/icons/767/wp_woothemes_ultimate/256/star.png); background-size: 80%; background-position: 50%; background-repeat: no-repeat; }", 0);
-                uploaderToggle.setAttribute("class", "uploader");
-                uploaderToggle.setAttribute("title", "Favorite Uploader");
-                uploader.parentNode.insertBefore(uploaderToggle, uploader.nextSibling)
-                uploaderToggle.addEventListener("click", function () {
-                    items["uploaders"].favorites.push(uploader.textContent)
-                    chrome.storage.sync.set({ "uploaders": items["uploaders"] })
-                    location.reload()
-                })
-            }
-        }
-    });
-}
+    if (userData.uploaders?.favorites?.includes(uploader.textContent))
+    {
+        document.styleSheets[0].insertRule(".uploader { float: left; border-radius: 50px; background-color: transparent; margin-right: 3px; height: 20px; width: 20px; background: url(https://images.freeimages.com/fic/images/icons/767/wp_woothemes_ultimate/256/star.png); background-size: 80%; background-position: 50%; background-repeat: no-repeat; }", 0);
+        document.styleSheets[0].insertRule(".uploader:hover { cursor: pointer; background: url(https://i.imgur.com/idTXgAh.png); background-size: 80%; background-position: 50%; background-repeat: no-repeat; }", 0);
+        uploader.parentElement.insertAdjacentHTML('beforeend', '<div class="uploader" id="favToggle" title="Unfavorite Uploader"></div>');
+        document.getElementById('favToggle').addEventListener('click', function() {
+            var index = userData.uploaders.favorites.indexOf(uploader.textContent);
+            userData.uploaders.favorites.splice(index, 1);
+            chrome.storage.sync.set({ 'uploaders': userData.uploaders });
+            location.reload();
+        });
+    }
+    else
+    {
+        document.styleSheets[0].insertRule(".uploader { float: left; border-radius: 50px; background-color: transparent; margin-right: 3px; height: 20px; width: 20px; background: url(https://i.imgur.com/idTXgAh.png); background-size: 80%; background-position: 50%; background-repeat: no-repeat; }", 0);
+        document.styleSheets[0].insertRule(".uploader:hover { cursor: pointer; background: url(https://images.freeimages.com/fic/images/icons/767/wp_woothemes_ultimate/256/star.png); background-size: 80%; background-position: 50%; background-repeat: no-repeat; }", 0);
+        uploader.parentElement.insertAdjacentHTML('beforeend', '<div class="uploader" id="favToggle" title="Favorite Uploader"></div>');
+        document.getElementById('favToggle').addEventListener('click', function () {
+            userData.uploaders.favorites.push(uploader.textContent);
+            chrome.storage.sync.set({ 'uploaders': userData.uploaders });
+            location.reload();
+        });
+    };
+};
 
-document.onload = onLoad()
-
-window.onresize = function () {
-    var torrents_container = document.querySelector('body > .container');
-    if (window.screen.innerWidth > 2080) torrents_container.setAttribute('style', 'width: 2000px;');
-    else torrents_container.removeAttribute('style');
-}
+document.onload = onLoad();

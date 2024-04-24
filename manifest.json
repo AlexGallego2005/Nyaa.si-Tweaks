@@ -23,11 +23,6 @@
       "matches": ["https://nyaa.si/settings"],
       "run_at": "document_idle",
       "js": ["nyaa/settings.js"]
-    },
-    {
-      "matches": ["https://nyaa.si/downloads"],
-      "run_at": "document_idle",
-      "js": ["nyaa/downloads.js"]
     }
   ],
   "web_accessible_resources": [
