@@ -1,3 +1,9 @@
+/**
+ * https://github.com/AlexGallego2005/Nyaa.si-Tweaks/
+ * Creator: Álex
+ * Contact me: discord.gg/6Fg4fPwjGm or alex_gallego2005!
+ */
+
 // Are torrents with no seeders hidden?
 var hidden = false;
 var hiddenTorrentsNum = 0;
@@ -9,7 +15,7 @@ const paging = document.querySelectorAll('.pagination > li');
 const navbar = document.querySelector("#navbar > ul");
 
 /** Don't execute stuff if user inside these pages. */
-const restricted = ['upload', 'rules', 'info', 'rss', 'view', 'settings', 'downloads'];
+const restricted = ['upload', 'rules', 'info', 'rss', 'view', 'settings', 'downloads', 'favorites'];
 
 /** Function to load when page finishes loading. */
 async function onLoad()
@@ -44,9 +50,18 @@ async function onLoad()
     };
 
     /** Create extra links or text nodes in the nav bar. */
-    function loadNavigationBar()
+    async function loadNavigationBar()
     {
-        navbar.insertAdjacentHTML('beforeend', `<li><a href="/downloads">Downloads</a></li>`);
+        navbar.insertAdjacentHTML('beforeend', `<li class="dropdown">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">
+								Tweaks
+								<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu">
+								<li><a href="/downloads">Downloads</a></li>
+								<li><a href="${ await createFavsLink() }">Favorites</a></li>
+							</ul>
+						</li>`);
         navbar.insertAdjacentHTML('beforeend', `<li><a id="hiddenTorrentsNum" href=""></a></li>`);
         return;
     };
@@ -107,6 +122,35 @@ async function onLoad()
     if (userData.preferences.highlight_uploaders) highlightUploaders();
     if (userData.preferences.autohide) hideTorrents();
 }
+
+async function createFavsLink()
+{
+    /** @type {{ filters: { global: [], local: { template?: [] } }, preferences: { autohide: boolean, custom_background: boolean, custom_background_link: string, global_filters: boolean, highlight_uploaders: boolean, per_uploader_filters: boolean }, uploaders: { favorites: [] } }} */
+    const userData = await chrome.storage.sync.get(['preferences', 'uploaders', 'filters']);
+    /** @type {string} - Search query. */
+    var query = 'https://nyaa.si/?f=0&c=0_0&q=';
+
+    if (userData.preferences.global_filters)
+    {
+        /** @type {string} - yes. */
+        var globals = userData.filters.global.join(' ');
+        /** @type {Array} - yes. */
+        var uploaders = [];
+
+        for (const uploader of userData.uploaders.favorites)
+        {
+            console.log(uploader);
+            if (userData.preferences.per_uploader_filters && Object.keys(userData.filters.local).includes(uploader)) continue;
+            uploaders.push(uploader);
+        };
+
+        query += '(' + globals + ' ' + ( uploaders.length > 1 ? '(' + uploaders.join('|') + '))' : ')' );
+    };
+
+    if (userData.preferences.per_uploader_filters) for (const [uploader, filters] of Object.entries(userData.filters.local)) query += '|(' + filters.join(' ') + ' (' + uploader + '))';
+    
+    return query;
+};
 
 /** Hide or unhide torrents without seeders. */
 function hideTorrents()
