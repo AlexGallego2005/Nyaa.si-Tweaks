@@ -1,17 +1,18 @@
 function onLoad() {
-    var html = document.querySelector('html'),
-        head = document.querySelector('head'),
-        body = document.querySelector('body'),
-        container = document.querySelector('body > div.container');
+    const html = document.querySelector('html');
+    var head = document.querySelector('head');
+    const body = document.querySelector('body');
+    const container = document.querySelector('body > div.container');
+
     head.remove()
     head = document.createElement('head');
     html.insertBefore(head, body);
 
     document.head.insertAdjacentHTML('beforeend', `
 		<meta charset="utf-8">
-		<title>Browse :: Nyaa</title>
+		<title>Downloads :: Nyaa Tweaks</title>
 
-		<meta name="viewport" content="width=480px">
+		<meta name="viewport" content="width=480">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<link rel="shortcut icon" type="image/png" href="/static/favicon.png">
 		<link rel="icon" type="image/png" href="/static/favicon.png">
@@ -19,7 +20,7 @@ function onLoad() {
 		<link rel="alternate" type="application/rss+xml" href="https://nyaa.si/?page=rss">
 
 		<meta property="og:site_name" content="Nyaa">
-		<meta property="og:title" content="Browse :: Nyaa">
+		<meta property="og:title" content="Downloads :: Nyaa Tweaks">
 		<meta property="og:image" content="/static/img/avatar/default.png">
 <meta name="description" content="A BitTorrent community focused on Eastern Asian media including anime, manga, music, and more">
 <meta name="keywords" content="torrents, bittorrent, torrent, anime, manga, sukebei, download, nyaa, magnet, magnets">
@@ -98,7 +99,7 @@ function onLoad() {
     error.replaceChildren();
 
     container.insertAdjacentHTML('beforeend', `
-    <div class="table-responsive">
+    <div class="table-responsive" style="overflow: visible;">
         <table class="table table-bordered table-hover table-striped torrent-list">
             <thead>
                 <tr>
@@ -120,7 +121,7 @@ function onLoad() {
     `)
 
     var tbody = document.querySelector('tbody');
-
+/*
     function loadDownloads() {
         chrome.storage.local.get(['downloads'], function (items) {
             console.log(items['downloads'].downloadIds)
@@ -171,14 +172,75 @@ function onLoad() {
             }
 
         });
+    };*/
+
+    async function loadDownloads()
+    {
+        /** @type {{ downloads: { id?: { filename: string, href: string, torrent: string, start: Date } }} */
+        const userData = await chrome.storage.local.get(['downloads']);
+
+        for (const [id, download] of Object.entries(userData.downloads))
+        {
+            var date = new Date(Date.parse(download.start));
+
+            tbody.insertAdjacentHTML('afterbegin', `
+<tr id="${ id }" class="default">
+    <td></td>
+    <td>
+        <a href="${ download.href }" title="${ download.filename }">${ download.filename }</a>
+    </td>
+    <td class="text-center">
+        <a href="${ download.torrent }"><i class="fa fa-fw fa-download"></i></a>
+    </td>
+    <td class="text-center"></td>
+    <td class="text-center" data-timestamp="${ download.start }">${ date.getFullYear() }-${ date.getMonth().toString().padStart(2, '0') }-${ date.getDay().toString().padStart(2, '0') } ${ date.getHours().toString().padStart(2, '0') }:${ date.getMinutes().toString().padStart(2, '0') }</td>
+
+    <td class="text-center"></td>
+    <td class="text-center"></td>
+    <td class="text-center"></td>
+    <td style="overflow: visible; max-width: 0px; padding: 0; position: relative;">
+        <button class="btn btn-primary fetch" style="position: absolute; top: 1px; left: 8px;">Fetch Info</button>
+    </td>
+</tr>
+            `);
+        };
     };
-    loadDownloads();
+
+    loadDownloads().then(() => {
+        document.querySelectorAll('button.fetch').forEach( (button) => {
+            button.addEventListener('click', function() {
+                fetch(button.parentElement.parentElement.children[1].children[0].getAttribute('href')).then(function (data) {
+                    return data.text();
+                }).then(function (html) {
+                    const main = button.parentElement.parentElement;
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    var uploader_class = doc.querySelector('body > div.container > div').getAttribute('class').split('-')[1];
+                    var torrentName = doc.querySelector('body > div.container > div > div > h3').textContent;
+                    var category = [doc.querySelectorAll('.col-md-5 > a')[0].textContent, doc.querySelectorAll('.col-md-5 > a')[1].textContent];
+                    var category_img = doc.querySelectorAll('.col-md-5 > a')[1].getAttribute('href');
+                    var seeders = doc.querySelectorAll('.col-md-5 > span')[0].textContent;
+                    var leechers = doc.querySelectorAll('.col-md-5 > span')[1].textContent;
+                    var size = doc.querySelectorAll('.col-md-5')[6].innerHTML;
+                    var completed = doc.querySelectorAll('.col-md-5')[7].innerHTML;
+
+                    main.setAttribute('class', uploader_class);
+                    main.children[0].innerHTML = `<a href="${ category_img }" title="${ category.join(' - ') }"><img src="/static/img/icons/nyaa/${ category_img.split('=')[1] }.png" alt="${ category.join(' - ') }" class="category-icon"></a>`;
+                    main.children[1].children[0].textContent = torrentName.trim();
+                    main.children[1].children[0].setAttribute('title', torrentName.trim());
+                    main.children[3].textContent = size.trim();
+                    main.children[5].textContent = seeders.trim();
+                    main.children[6].textContent = leechers.trim();
+                    main.children[7].textContent = completed.trim();
+                }).catch(function (err) {
+                    console.error('Something went wrong.', err);
+                }).then( () => {
+                    button.parentElement.replaceChildren();
+                });
+            });
+        });
+    });
 }
 
 document.onload = onLoad()
-
-window.onresize = function () {
-    var torrents_container = document.querySelector('body > .container');
-    if (window.screen.innerWidth > 2080) torrents_container.setAttribute('style', 'width: 2000px;');
-    else torrents_container.removeAttribute('style');
-}

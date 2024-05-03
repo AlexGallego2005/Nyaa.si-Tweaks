@@ -4,6 +4,14 @@
  * Contact me: discord.gg/6Fg4fPwjGm or alex_gallego2005!
  */
 
+chrome.storage.sync.get(['preferences', 'uploaders', 'filters'], function(data) {
+    console.log(data);
+});
+
+chrome.storage.local.get(['downloads'], function(data) {
+    console.log(data);
+});
+
 // Are torrents with no seeders hidden?
 var hidden = false;
 var hiddenTorrentsNum = 0;
@@ -15,7 +23,7 @@ const paging = document.querySelectorAll('.pagination > li');
 const navbar = document.querySelector("#navbar > ul");
 
 /** Don't execute stuff if user inside these pages. */
-const restricted = ['upload', 'rules', 'info', 'rss', 'view', 'settings', 'downloads', 'favorites'];
+const restricted = ['upload', 'rules', 'info', 'rss', 'view', 'settings', 'downloads'];
 
 /** Function to load when page finishes loading. */
 async function onLoad()
@@ -23,14 +31,11 @@ async function onLoad()
     /** @type {{ filters: { global: [], local: { template?: [] } }, preferences: { autohide: boolean, custom_background: boolean, custom_background_link: string, global_filters: boolean, highlight_uploaders: boolean, per_uploader_filters: boolean }, uploaders: { favorites: [] } }} */
     const userData = await chrome.storage.sync.get(['preferences', 'uploaders', 'filters']);
 
-    // Debug
-    console.log(userData);
-
     /** Inserts new custom styles. */
     function loadStylesheets()
     {
         // Responsive width (for wider displays overall).
-        document.styleSheets[0].insertRule("body > .container { width: 80vw !important; }", 1);
+        document.styleSheets[0].insertRule("body > .container { width: 80vw !important; }", 0);
         
         if (restricted.some(l => window.location.href.includes(l))) return;
 
@@ -68,14 +73,14 @@ async function onLoad()
 
     loadStylesheets();
     setCustomBackground();
-    loadNavigationBar();
+    await loadNavigationBar();
 
     if (restricted.some(l => window.location.href.includes(l))) return;
     
     /** Clone the bottom pages-navigation bar above the torrents table. */
     function clonePages()
     {
-        container.insertAdjacentElement('afterbegin', document.querySelector('body > div.container > div.center')?.cloneNode(true) ?? document.querySelector('body > div.container > div.row > div.center')?.cloneNode(true));
+        container.insertAdjacentHTML('afterbegin', `<div class="center">${ document.querySelector('body > div.container > div.center > .pagination')?.outerHTML ?? document.querySelector('body > div.container > div.row > div.center > .pagination')?.outerHTML }</div>`);
         return;
     };
 
@@ -139,7 +144,6 @@ async function createFavsLink()
 
         for (const uploader of userData.uploaders.favorites)
         {
-            console.log(uploader);
             if (userData.preferences.per_uploader_filters && Object.keys(userData.filters.local).includes(uploader)) continue;
             uploaders.push(uploader);
         };

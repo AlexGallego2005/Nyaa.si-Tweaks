@@ -153,8 +153,14 @@ function onLoad() {
             } else if (action == 'remove') {
                 if (items['filters'].local[selected_uploader]) {
                     for (var i = 0; i < customSplitted.length; i++) {
-                        if (items['filters'].local[selected_uploader].includes(customSplitted[i]) && !customSplitted[i] == '') { var index = items['filters'].local[selected_uploader].indexOf(customSplitted[i]); items['filters'].local[selected_uploader].splice(index, 1); }
-                    }
+                        if (items['filters'].local[selected_uploader].includes(customSplitted[i]) && !customSplitted[i] == '')
+                        {
+                            var index = items['filters'].local[selected_uploader].indexOf(customSplitted[i]);
+                            items['filters'].local[selected_uploader].splice(index, 1);
+                        };
+                    };
+
+                    if (items['filters'].local[selected_uploader].length < 1) delete items['filters'].local[selected_uploader];
                     chrome.storage.sync.set({ 'filters': items['filters'] });
                     custom_input.value = '';
                     location.reload();
