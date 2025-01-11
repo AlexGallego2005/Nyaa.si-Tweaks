@@ -1,0 +1,82 @@
+html {
+    body {
+        > div.container {
+            width: 80dvw !important;
+
+            div.table-responsive {
+                margin-bottom: 20px;
+            }
+
+            table {
+                backdrop-filter: blur(5px);
+                background-color: white;
+                margin-bottom: 0;
+            }
+        }
+
+        div.container ul.pagination > li > a:not(:hover, :focus) {
+            background-color: white;
+        }
+
+        div.container ul.pagination > li.active > a {
+            background-color: #337ab7;
+        }
+    }
+    
+    body.dark {
+        div.container ul.pagination > li > a:not(:hover, :focus) {
+            background-color: #191919;
+        }
+
+        div.container ul.pagination > li.active > a {
+            background-color: #337ab7;
+        }
+
+        > div.container {
+            table {
+                background-color: #303030;
+            }
+        }
+    }
+
+    .placeholder {
+        height: 37px;
+        width: 37px;
+    }
+
+    .noSeeds {
+        background-image: url(https://static.thenounproject.com/png/55393-200.png);
+        background-size: 40%;
+        background-position: 50%;
+        background-repeat: no-repeat;
+        height: 37px;
+        width: 37px;
+        margin-left: 34px;
+        z-index: 10;
+    }
+
+    .favorite {
+        position: relative;
+    }
+
+    .favorite a {
+        padding-left: 25px;
+    }
+
+    .favorite::before {
+        content: '';
+        display: block;
+        background: url('https://pngimg.com/d/star_PNG1594.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        width: 20px;
+        height: 20px;
+        position: absolute;
+        left: 5px;
+        transition: all .1s ease;
+    }
+
+    .favorite:hover::before {
+        transform: scale(1.5);
+    }
+}

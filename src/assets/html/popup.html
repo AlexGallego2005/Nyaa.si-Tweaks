@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nyaa.si Tweaks</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
-    <link rel="stylesheet" type="text/css" href="switches.css">
+    <link rel="stylesheet" type="text/css" href="../css/popup.css">
+    <link rel="stylesheet" type="text/css" href="../css/switches.css">
 </head>
 <body>
     <div id="title">
@@ -26,7 +26,7 @@
             <span>Favorite uploaders</span>
             <span class="info" title="Highlights your favorite uploaders.">&#128712;</span>
             <label class="switch">
-                <input id="highlightFav" type="checkbox" checked>
+                <input id="highlightUploaders" type="checkbox" checked>
                 <span class="slider round"></span>
             </label>
             <em class="viewMore" id="viewUploaders">View</em>
@@ -37,7 +37,7 @@
             <span>Global filters</span>
             <span class="info" title="Filters your favorite uploaders with certain words (1080, FLAC, etc.).">&#128712;</span>
             <label class="switch">
-                <input id="prefs" type="checkbox" checked>
+                <input id="globalFilters" type="checkbox" checked>
                 <span class="slider round"></span>
             </label>
             <em class="viewMore" id="viewFilters">View</em>
@@ -48,7 +48,7 @@
             <span>Per uploader filters</span>
             <span class="info" title="Filters a single uploader with certain words.">&#128712;</span>
             <label class="switch">
-                <input id="per_uploader_filter" type="checkbox" checked>
+                <input id="perUploaderFilters" type="checkbox" checked>
                 <span class="slider round"></span>
             </label>
             <em class="viewMore" id="view_per_uploader_filters">View</em>
@@ -59,7 +59,7 @@
             <span>Custom background</span>
             <span class="info" title="Changes default background for a user-custom one.">&#128712;</span>
             <label class="switch">
-                <input id="custom_background" type="checkbox" checked>
+                <input id="customBackground" type="checkbox" checked>
                 <span class="slider round"></span>
             </label>
         </div>
@@ -112,6 +112,7 @@
             <button class="button" id="set_custom_background_button">Set</button>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/script.js"></script>
 </body>
 </html>

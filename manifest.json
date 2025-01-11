@@ -1,45 +1,46 @@
 {
   "manifest_version": 3,
-  "name": "Nyaa.si Tweaks",
-  "version": "0.8",
+  "name": "Nyaa.si Tweaks - Beta",
+  "version": "2.0",
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background.js"
   },
   "action": {
-    "default_popup": "popup/popup.html"
+    "default_popup": "src/assets/html/popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["https://nyaa.si/*"],
-      "run_at": "document_idle",
-      "js": ["nyaa/nyaa.js"]
-    },
-    {
-      "matches": ["https://nyaa.si/view/*"],
-      "run_at": "document_idle",
-      "js": ["nyaa/view.js"]
-    },
-    {
-      "matches": ["https://nyaa.si/settings"],
-      "run_at": "document_idle",
-      "js": ["nyaa/settings.js"]
-    },
-    {
       "matches": ["https://nyaa.si/downloads"],
       "run_at": "document_idle",
-      "js": ["nyaa/downloads.js"]
+      "js": [
+        "src/modules/storage.js",
+        "src/modules/downloads.js"
+      ]
+    },
+    {
+      "matches": ["https://nyaa.si/*"],
+      "run_at": "document_idle",
+      "js": [
+        "src/modules/storage.js",
+        "src/modules/webpage.js",
+        "src/modules/events.js",
+        "src/main.js"
+      ]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["popup/popup.html"],
-      "matches": ["https://nyaa.si/*"]
+      "matches": ["https://nyaa.si/*"],
+      "resources": [
+        "src/assets/*"
+      ]
     }
   ],
   "permissions": [
     "activeTab",
     "storage",
-    "downloads"
+    "downloads",
+    "unlimitedStorage"
   ],
   "icons": {
     "16": "./icons/icon16.png",
