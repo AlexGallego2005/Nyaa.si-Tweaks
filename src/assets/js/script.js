@@ -65,6 +65,10 @@ async function uploaders(action, type) {
     return document.getElementById('custom_uploader_input').value = '';
 };
 
+/**
+ * @param { ('add'|'remove'|'clear') } action - Action to execute.
+ * @returns 
+ */
 async function globalFilters(action) {
     const filters = (document?.getElementById('custom_global_filter_input')?.value)?.split(';');
 
@@ -108,6 +112,155 @@ async function globalFilters(action) {
 
     return document.getElementById('custom_global_filter_input').value = '';
 };
+
+/**
+ * @param { ('add'|'remove'|'clear') } action - Action to execute.
+ * @param { string } uploader - Selected uploader to apply the filters for.
+ * @returns 
+ */
+async function perUploaderFilters(action, uploader) {
+    const filters = (document?.getElementById('custom_uploader_filter_input')?.value)?.split(';');
+    console.log(filters)
+
+    await load('data').then( async (data) => {
+        switch (action)
+        {
+            case 'add':
+                    if (data?.filters?.uploader?.[selected_uploader])
+                    {
+                        for (const filter of filters)
+                            if (filter?.length > 0 && !data?.filters?.uploader?.[selected_uploader]?.includes(filter))
+                                data.filters.uploader[selected_uploader].push(filter);
+                    }
+                    else data.filters.uploader[selected_uploader] = filters;
+
+                    await save('data', data);
+                    document.getElementById('custom_uploader_filter_input').value = '';
+                    window.location.reload();
+                break;
+
+            case 'remove':
+                    if (data?.filters?.uploader?.[selected_uploader])
+                        for (const filter of filters)
+                            if (filter?.length > 0 && data?.filters?.uploader?.[selected_uploader]?.includes(filter))
+                                data.filters.uploader[selected_uploader].splice(data?.filters?.uploader?.[selected_uploader]?.indexOf(filter), 1);
+
+                    if (data?.filters?.uploader[selected_uploader]?.length < 1) delete data.filters.uploader[selected_uploader];
+
+                    await save('data', data);
+                    document.getElementById('custom_uploader_filter_input').value = '';
+                    window.location.reload();
+                break;
+
+            case 'select':
+                    if (!document?.getElementById('custom_uploader_filter_input')?.value)
+                    {
+                        document.getElementById('custom_uploader_filter_input').setAttribute('placeholder', 'Cannot be empty!'),
+                        setTimeout(() => { document.getElementById('custom_uploader_filter_input').setAttribute('placeholder', 'Separate with (;)...'); }, 3000);
+                        return;
+                    };
+
+                    await load('data').then( async (data) => {
+                        if (data?.uploaders?.favorites)
+                        {
+                            var buttonHolder = document?.getElementById('select_uploader_for_filter');
+                            buttonHolder.replaceChildren();
+
+                            for (const uploader of data?.uploaders?.favorites)
+                            {
+                                var favoriteUploaderButton = document.createElement('button');
+                                favoriteUploaderButton.classList.add('button', 'margin');
+                                favoriteUploaderButton.innerHTML = uploader;
+                                favoriteUploaderButton.addEventListener('click', function() {
+                                    let selectedUploader = this.innerHTML;
+                                    document.getElementById('select_custom_uploader_filter_button').setAttribute('class', 'button hide');
+                                    document.getElementById('custom_uploader_filter_button').setAttribute('class', 'button');
+                                    document.getElementById('remove_custom_uploader_filter_button').setAttribute('class', 'button');
+                                    buttonHolder.replaceChildren(`Selected: ${ selectedUploader }`);
+                                    selected_uploader = selectedUploader;
+                                });
+                                buttonHolder.appendChild(favoriteUploaderButton);
+                            };
+                        };
+                    });
+                break;
+
+            default:
+                break;
+        };
+    });
+};
+
+async function getRandomHex() {
+    const array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f'];
+    var hexString = '#';
+    
+    for (let i = 0; i < 6; i++) hexString += array[Math.floor(Math.random() * array.length)];
+    return hexString;
+};
+
+document?.getElementById('viewUploaders')?.addEventListener('click', async function() {
+    const uploadersTextbox = document?.getElementById('showFavUploaders');
+
+    if (uploadersTextbox?.hasAttribute('style'))
+    {
+        await load('data').then( async (data) => {
+            for (const uploader of data?.uploaders?.favorites)
+                uploadersTextbox.innerHTML += `<span style="color: ${ await getRandomHex() }">${ uploader }</span>`;
+            uploadersTextbox.removeAttribute('style');
+        });
+
+        this.innerText = 'Hide';
+    }
+    else
+    {
+        uploadersTextbox.innerHTML = '';
+        uploadersTextbox.style.display = 'none';
+        this.innerText = 'View';
+    };
+});
+
+document?.getElementById('viewFilters')?.addEventListener('click', async function() {
+    const filtersTextbox = document?.getElementById('showPrefFilters');
+
+    if (filtersTextbox?.hasAttribute('style'))
+    {
+        await load('data').then( async (data) => {
+            for (const filter of data?.filters?.global)
+                filtersTextbox.innerHTML += `<span style="color: ${ await getRandomHex() }">${ filter }</span>`;
+            filtersTextbox.removeAttribute('style');
+        });
+
+        this.innerText = 'Hide';
+    }
+    else
+    {
+        filtersTextbox.innerHTML = '';
+        filtersTextbox.style.display = 'none';
+        this.innerText = 'View';
+    };
+});
+
+document?.getElementById('view_per_uploader_filters')?.addEventListener('click', async function() {
+    const singleFiltersTextbox = document.getElementById('show_per_uploader_filters');
+
+    if (singleFiltersTextbox?.hasAttribute('style'))
+    {
+        await load('data').then( async (data) => {
+            for (const [uploader, filters] of Object.entries(data?.filters?.uploader))
+                singleFiltersTextbox.innerHTML += `<span style="color: ${ await getRandomHex() }">${ uploader }: [${ filters }]</span>`;
+            singleFiltersTextbox.removeAttribute('style');
+        });
+
+        this.innerText = 'Hide';
+    }
+    else
+    {
+        singleFiltersTextbox.innerHTML = '';
+        singleFiltersTextbox.style.display = 'none';
+        this.innerText = 'View';
+    };
+});
 
 async function onLoad() {
     //console.log(chrome.runtime.getBackgroundPage());
@@ -174,66 +327,6 @@ async function onLoad() {
         });
     });
     
-    var viewUploaders = document.getElementById('viewUploaders'),
-        viewFilters = document.getElementById('viewFilters'),
-        view_per_uploader_filters = document.getElementById('view_per_uploader_filters');
-
-    viewUploaders.addEventListener('click', function () {
-        var uploadersTextbox = document.getElementById('showFavUploaders');
-        if (uploadersTextbox.hasAttribute('style')) {
-            chrome.storage.sync.get(['uploaders'], function (items) {
-                console.log(items['uploaders'])
-                if (items['uploaders'] && items['uploaders'].favorites && items['uploaders'].favorites.length > 0) uploadersTextbox.innerHTML = items['uploaders'].favorites.join(' - ');
-                else uploadersTextbox.innerHTML = '';
-                uploadersTextbox.removeAttribute('style');
-            })
-            viewUploaders.innerHTML = 'unView';
-        } else {
-            uploadersTextbox.setAttribute('style', 'display: none;');
-            viewUploaders.innerHTML = 'View';
-        }
-    })
-
-    viewFilters.addEventListener('click', function () {
-        var filtersTextbox = document.getElementById('showPrefFilters');
-        if (filtersTextbox.hasAttribute('style')) {
-            chrome.storage.sync.get(['filters'], function (items) {
-                if (items['filters'] && items['filters'].global && items['filters'].global.length > 0) filtersTextbox.innerHTML = items['filters'].global.join(' - ');
-                else filtersTextbox.innerHTML = '';
-                filtersTextbox.removeAttribute('style');
-            })
-            viewFilters.innerHTML = 'unView';
-        } else {
-            filtersTextbox.setAttribute('style', 'display: none;');
-            viewFilters.innerHTML = 'View';
-        }
-    })
-
-    view_per_uploader_filters.addEventListener('click', function () {
-        var singleFiltersTextbox = document.getElementById('show_per_uploader_filters');
-        if (singleFiltersTextbox.hasAttribute('style')) {
-            chrome.storage.sync.get(['filters'], function (items) {
-                if (items['filters'] && items['filters'].local) {
-                    var filters = [];
-                    for (var i = 0; i < Object.keys(items['filters'].local).length; i++) {
-                        var temp = [];
-                        for (var ii = 0; ii < items['filters'].local[Object.keys(items['filters'].local)[i]].length; ii++) {
-                            temp.push(items['filters'].local[Object.keys(items['filters'].local)[i]][ii])
-                        }
-                        filters.push(`[ ${Object.keys(items['filters'].local)[i]}: ${temp.join(' - ')} ]`)
-                    }
-                    singleFiltersTextbox.innerHTML = filters.join(' - ')
-                }
-                else singleFiltersTextbox.innerHTML = '';
-                singleFiltersTextbox.removeAttribute('style');
-            })
-            view_per_uploader_filters.innerHTML = 'unView';
-        } else {
-            singleFiltersTextbox.setAttribute('style', 'display: none;');
-            view_per_uploader_filters.innerHTML = 'View';
-        }
-    })
-
     var button = document.getElementById('expand'),
         settings = document.getElementById('settingsDiv');
 
@@ -245,72 +338,7 @@ async function onLoad() {
             settings.setAttribute('style', 'display: none;');
             button.textContent = 'Settings ▼';
         }
-    })
-
-    function per_uploader_filters(action) {
-        var custom_input = document.getElementById('custom_uploader_filter_input'),
-            customSplitted = custom_input.value.split(';');
-
-        chrome.storage.sync.get(['filters'], function (items) {
-            if (action == 'add') {
-                if (items['filters'].local[selected_uploader]) {
-                    for (var i = 0; i < customSplitted.length; i++) {
-                        if (!items['filters'].local[selected_uploader].includes(customSplitted[i]) && !customSplitted[i] == '') items['filters'].local[selected_uploader].push(customSplitted[i]);
-                    }
-                }
-                else items['filters'].local[selected_uploader] = customSplitted;
-
-                chrome.storage.sync.set({ 'filters': items['filters'] });
-                custom_input.value = '';
-                location.reload();
-            } else if (action == 'remove') {
-                if (items['filters'].local[selected_uploader]) {
-                    for (var i = 0; i < customSplitted.length; i++) {
-                        if (items['filters'].local[selected_uploader].includes(customSplitted[i]) && !customSplitted[i] == '')
-                        {
-                            var index = items['filters'].local[selected_uploader].indexOf(customSplitted[i]);
-                            items['filters'].local[selected_uploader].splice(index, 1);
-                        };
-                    };
-
-                    if (items['filters'].local[selected_uploader].length < 1) delete items['filters'].local[selected_uploader];
-                    chrome.storage.sync.set({ 'filters': items['filters'] });
-                    custom_input.value = '';
-                    location.reload();
-                }
-            } else if (action == 'select') {
-                if (!custom_input.value) custom_input.setAttribute('placeholder', 'Cannot be empty!'), setTimeout(function () { custom_input.setAttribute('placeholder', 'Separate with (;)...'); }, 3000);
-                else {
-                    chrome.storage.sync.get(['uploaders'], function (items) {
-                        if (items['uploaders'].favorites.length > 0) {
-                            var button_holder = document.getElementById('select_uploader_for_filter');
-                            button_holder.replaceChildren();
-                            for (var i = 0; i < items['uploaders'].favorites.length; i++) {
-                                var favorite_uploader_button = document.createElement('button');
-                                favorite_uploader_button.setAttribute('class', 'button margin');
-                                favorite_uploader_button.setAttribute('id', 'uploader_for_selection');
-                                favorite_uploader_button.innerHTML = items['uploaders'].favorites[i];
-                                button_holder.appendChild(favorite_uploader_button);
-                            }
-
-                            var favorite_uploader_buttons = document.querySelectorAll('[id="uploader_for_selection"]');
-                            favorite_uploader_buttons.forEach(function (uploader_button) {
-                                uploader_button.addEventListener('click', function () {
-                                    selected_uploader = uploader_button.innerHTML;
-                                    select_custom_uploader_filter_button.setAttribute('class', 'button hide');
-                                    custom_uploader_filter_button.setAttribute('class', 'button');
-                                    remove_custom_uploader_filter_button.setAttribute('class', 'button');
-                                    button_holder.replaceChildren(`Selected: ${selected_uploader}`);
-                                });
-                            });
-                        }
-                    });
-                }
-            }
-        })
-    }
-
-    
+    });
 
     var custom_uploader_button = document.getElementById('custom_uploader_button'),
         remove_custom_uploader_button = document.getElementById('remove_custom_uploader_button'),
@@ -351,15 +379,15 @@ async function onLoad() {
     });
 
     select_custom_uploader_filter_button.addEventListener('click', function () {
-        per_uploader_filters('select')
+        perUploaderFilters('select')
     })
 
     custom_uploader_filter_button.addEventListener('click', function () {
-        per_uploader_filters('add');
+        perUploaderFilters('add');
     });
 
     remove_custom_uploader_filter_button.addEventListener('click', function () {
-        per_uploader_filters('remove');
+        perUploaderFilters('remove');
     });
 
     set_custom_background_button.addEventListener('click', function () {

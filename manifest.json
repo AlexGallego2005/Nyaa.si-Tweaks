@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nyaa.si Tweaks - Beta",
-  "version": "2.0",
+  "version": "0.9.1",
   "background": {
     "service_worker": "src/background.js"
   },
@@ -15,6 +15,15 @@
       "js": [
         "src/modules/storage.js",
         "src/modules/downloads.js"
+      ]
+    },
+    {
+      "matches": ["https://nyaa.si/view/*"],
+      "run_at": "document_idle",
+      "js": [
+        "src/modules/storage.js",
+        "src/modules/webpage.js",
+        "src/modules/view.js"
       ]
     },
     {

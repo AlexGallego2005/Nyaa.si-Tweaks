@@ -6,22 +6,23 @@ async function createFavsLink()
     /** @type { string } - Search query. */
     var query = 'https://nyaa.si/?f=0&c=0_0&q=';
 
-    if (preferences.globalFilters)
+    if (preferences?.globalFilters)
     {
         const filters = data?.filters?.global?.join(' ');
         const uploaders = new Array();
 
         for (const uploader of data.uploaders.favorites)
         {
-            if (preferences.perUploaderFilters && Object.keys(data.filters.uploader).includes(uploader)) continue;
+            if (preferences?.perUploaderFilters && Object.keys(data.filters.uploader).includes(uploader)) continue;
             uploaders.push(uploader);
         };
 
-        query += '(' + filters + ' ' + ( uploaders.length > 1 ? '(' + uploaders.join('|') + '))' : ')' );
+        query += `(${ filters } ${ uploaders?.length > 0 ? `(${ uploaders.join('|') }))` : ')' }`;
     };
 
-    if (preferences.perUploaderFilters)
-        for (const [uploader, filters] of Object.entries(data.filters.uploader))
+    if (preferences?.perUploaderFilters)
+        for (const [uploader, filters] of Object.entries(data?.filters?.uploader))
+            console.log(filters),
             query += '|(' + filters.join(' ') + ' (' + uploader + '))';
     
     return query;
@@ -55,6 +56,12 @@ function stylesheets()
         const css = await response.text();
         document.styleSheets[0].insertRule(css, 0);
     });
+
+    if (window.location.href.includes('/view/'))
+        fetch(chrome.runtime.getURL('src/assets/css/view.css')).then(async (response) => {
+            const css = await response.text();
+            document.styleSheets[0].insertRule(css, 0);
+        });
 };
 
 function pagination()

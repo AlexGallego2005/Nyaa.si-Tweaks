@@ -1,0 +1,30 @@
+html {
+    .uploader {
+        float: left;
+        border-radius: 50px;
+        background-color: transparent;
+        margin-right: 3px;
+        height: 20px;
+        width: 20px;
+        background: url('https://i.imgur.com/idTXgAh.png');
+        background-size: 80%;
+        background-position: 50%;
+        background-repeat: no-repeat;
+    }
+
+    .uploader:hover {
+        cursor: pointer;
+        background: url('https://images.freeimages.com/fic/images/icons/767/wp_woothemes_ultimate/256/star.png');
+        background-size: 80%;
+        background-position: 50%;
+        background-repeat: no-repeat;
+    }
+
+    .uploader.fav {
+        background-image: url('https://images.freeimages.com/fic/images/icons/767/wp_woothemes_ultimate/256/star.png');
+    }
+
+    .uploader.fav:hover {
+        background-image: url(https://i.imgur.com/idTXgAh.png);
+    }
+}
